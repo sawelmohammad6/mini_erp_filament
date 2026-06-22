@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
+            ->brandName('Mini ERP')
             ->path('admin')
             ->login()
             ->colors([
