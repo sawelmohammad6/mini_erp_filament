@@ -51,6 +51,7 @@ class ProductForm
                     ->schema([
                         FileUpload::make('image')
                             ->image()
+                            ->disk('public')
                             ->directory('products')
                             ->imagePreviewHeight('150')
                             ->maxSize(2048),

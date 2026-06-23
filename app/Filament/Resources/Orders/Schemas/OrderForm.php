@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Filament\Resources\Orders\Schemas;
+
+use App\Models\Product;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+
+class OrderForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->columns(2)
+            ->components([
+                Section::make('Order Details')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('customer_id')
+                            ->label('Customer')
+                            ->relationship('customer', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        Select::make('status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'processing' => 'Processing',
+                                'completed' => 'Completed',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->default('pending')
+                            ->required(),
+                    ]),
+                Section::make('Notes')
+                    ->schema([
+                        Textarea::make('notes')
+                            ->rows(3),
+                    ]),
+                Section::make('Order Items')
+                    ->schema([
+                        Repeater::make('items')
+                            ->relationship('items')
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label('Product')
+                                    ->options(fn () => Product::pluck('name', 'id'))
+                                    ->searchable()
+                                    ->required()
+                                    ->afterStateUpdated(function (Set $set, ?string $state) {
+                                        if ($state) {
+                                            $product = Product::find($state);
+                                            if ($product) {
+                                                $set('unit_price', $product->price);
+                                            }
+                                        }
+                                    })
+                                    ->columnSpan(3),
+                                TextInput::make('quantity')
+                                    ->required()
+                                    ->integer()
+                                    ->minValue(1)
+                                    ->default(1)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (Get $get, Set $set) {
+                                        self::updateSubtotal($get, $set);
+                                    })
+                                    ->columnSpan(1),
+                                TextInput::make('unit_price')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->prefix('$')
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (Get $get, Set $set) {
+                                        self::updateSubtotal($get, $set);
+                                    })
+                                    ->columnSpan(1),
+                                TextInput::make('subtotal')
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->disabled()
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(6)
+                            ->itemLabel(fn (array $state): ?string => null),
+                    ]),
+            ]);
+    }
+
+    public static function updateSubtotal(Get $get, Set $set): void
+    {
+        $quantity = (float) ($get('quantity') ?? 0);
+        $unitPrice = (float) ($get('unit_price') ?? 0);
+        $set('subtotal', number_format($quantity * $unitPrice, 2, '.', ''));
+    }
+}

@@ -21,9 +21,7 @@ class ProductsTable
         return $table
             ->columns([
                 ImageColumn::make('image')
-                    ->disk('public')
-                    ->height(50)
-                    ->square(),
+    ->url(fn ($record) => asset('storage/' . $record->image)),
                 TextColumn::make('name')
                     ->label('Product Name')
                     ->searchable()
