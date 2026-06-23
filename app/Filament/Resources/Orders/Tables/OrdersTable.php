@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Tables;
 
+use App\Enums\OrderStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -31,12 +32,11 @@ class OrdersTable
                     ->sortable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'processing' => 'info',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'gray',
+                    ->color(fn (OrderStatus $state): string => match ($state) {
+                        OrderStatus::Pending => 'warning',
+                        OrderStatus::Processing => 'info',
+                        OrderStatus::Completed => 'success',
+                        OrderStatus::Cancelled => 'danger',
                     })
                     ->sortable(),
                 TextColumn::make('created_at')
@@ -48,19 +48,19 @@ class OrdersTable
             ->filters([
                 Filter::make('pending')
                     ->label('Pending')
-                    ->query(fn (Builder $query): Builder => $query->where('status', 'pending'))
+                    ->query(fn (Builder $query): Builder => $query->where('status', OrderStatus::Pending))
                     ->toggle(),
                 Filter::make('processing')
                     ->label('Processing')
-                    ->query(fn (Builder $query): Builder => $query->where('status', 'processing'))
+                    ->query(fn (Builder $query): Builder => $query->where('status', OrderStatus::Processing))
                     ->toggle(),
                 Filter::make('completed')
                     ->label('Completed')
-                    ->query(fn (Builder $query): Builder => $query->where('status', 'completed'))
+                    ->query(fn (Builder $query): Builder => $query->where('status', OrderStatus::Completed))
                     ->toggle(),
                 Filter::make('cancelled')
                     ->label('Cancelled')
-                    ->query(fn (Builder $query): Builder => $query->where('status', 'cancelled'))
+                    ->query(fn (Builder $query): Builder => $query->where('status', OrderStatus::Cancelled))
                     ->toggle(),
             ])
             ->recordActions([

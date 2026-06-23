@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
+use App\Enums\OrderStatus;
 use App\Models\Product;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -29,13 +30,8 @@ class OrderForm
                             ->preload()
                             ->required(),
                         Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'processing' => 'Processing',
-                                'completed' => 'Completed',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->default('pending')
+                            ->options(OrderStatus::class)
+                            ->default(OrderStatus::Pending->value)
                             ->required(),
                     ]),
                 Section::make('Notes')

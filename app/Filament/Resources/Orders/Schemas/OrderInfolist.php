@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Orders\Schemas;
 
+use App\Enums\OrderStatus;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
@@ -20,12 +21,11 @@ class OrderInfolist
                     ->label('Customer'),
                 TextEntry::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'processing' => 'info',
-                        'completed' => 'success',
-                        'cancelled' => 'danger',
-                        default => 'gray',
+                    ->color(fn (OrderStatus $state): string => match ($state) {
+                        OrderStatus::Pending => 'warning',
+                        OrderStatus::Processing => 'info',
+                        OrderStatus::Completed => 'success',
+                        OrderStatus::Cancelled => 'danger',
                     }),
                 TextEntry::make('total_amount')
                     ->money('USD')
