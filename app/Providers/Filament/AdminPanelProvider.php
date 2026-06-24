@@ -9,6 +9,8 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\ExpenseReport;
 use App\Filament\Pages\SalesReport;
+use App\Filament\Pages\Settings;
+use App\Models\Setting;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -28,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->brandName('Mini ERP')
+            ->brandName(fn () => rescue(fn () => Setting::get()->business_name, 'My Business'))
             ->path('admin')
             ->login()
             ->colors([
@@ -40,6 +42,7 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
                 SalesReport::class,
                 ExpenseReport::class,
+                Settings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
