@@ -11,6 +11,7 @@ use App\Filament\Pages\ExpenseReport;
 use App\Filament\Pages\SalesReport;
 use App\Filament\Pages\Settings;
 use App\Models\Setting;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -48,6 +49,10 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make()
+                    ->navigationGroup('System'),
             ])
             ->middleware([
                 EncryptCookies::class,

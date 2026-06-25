@@ -7,6 +7,7 @@ use App\Filament\Widgets\MonthlySalesChartWidget;
 use App\Filament\Widgets\RecentOrdersWidget;
 use App\Filament\Widgets\SalesVsExpenseChartWidget;
 use App\Filament\Widgets\TopSellingProductsWidget;
+use App\Filament\Widgets\UserStatsWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -19,6 +20,7 @@ class Dashboard extends BaseDashboard
             SalesVsExpenseChartWidget::class,
             TopSellingProductsWidget::class,
             RecentOrdersWidget::class,
+            UserStatsWidget::class,
         ];
     }
 
