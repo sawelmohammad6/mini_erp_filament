@@ -2,7 +2,10 @@
 
 namespace App\Filament\Pages;
 
+use App\Exports\ExpenseExport;
 use App\Models\Expense;
+use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Schema;
@@ -12,9 +15,9 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
-use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Facades\Excel;
 use UnitEnum;
 
 class ExpenseReport extends Page implements HasTable
@@ -86,5 +89,31 @@ class ExpenseReport extends Page implements HasTable
             ->components([
                 EmbeddedTable::make(),
             ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('export_excel')
+                ->label('Export Excel')
+                ->icon('heroicon-o-document-arrow-down')
+                ->action(fn () => $this->exportExcel()),
+            Action::make('export_pdf')
+                ->label('Export PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->action(fn () => $this->exportPdf()),
+        ];
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new ExpenseExport(), 'expense-report.xlsx');
+    }
+
+    public function exportPdf()
+    {
+        $expenses = Expense::with('category')->get();
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.expenses', ['expenses' => $expenses]);
+        return response()->streamDownload(fn () => print($pdf->output()), 'expense-report.pdf');
     }
 }

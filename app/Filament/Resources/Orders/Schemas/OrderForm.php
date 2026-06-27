@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
+use Illuminate\Support\Facades\Cache;
 
 class OrderForm
 {
@@ -46,12 +47,13 @@ class OrderForm
                             ->schema([
                                 Select::make('product_id')
                                     ->label('Product')
-                                    ->options(fn () => Product::pluck('name', 'id'))
+                                    ->relationship('product', 'name')
                                     ->searchable()
+                                    ->preload()
                                     ->required()
                                     ->afterStateUpdated(function (Set $set, ?string $state) {
                                         if ($state) {
-                                            $product = Product::find($state);
+                                            $product = Cache::remember("product_price_{$state}", 3600, fn () => Product::find($state, ['id', 'price']));
                                             if ($product) {
                                                 $set('unit_price', $product->price);
                                             }

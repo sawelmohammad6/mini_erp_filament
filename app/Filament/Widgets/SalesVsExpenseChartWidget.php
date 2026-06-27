@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Expense;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class SalesVsExpenseChartWidget extends ChartWidget
 {
@@ -18,19 +19,34 @@ class SalesVsExpenseChartWidget extends ChartWidget
 
     protected function getData(): array
     {
+        $year = now()->year;
+
+        $monthlyData = Cache::remember("sales_vs_expense_chart_{$year}", 300, function () use ($year) {
+            $salesByMonth = Order::where('status', OrderStatus::Completed)
+                ->whereYear('created_at', $year)
+                ->selectRaw("MONTH(created_at) as month, SUM(total_amount) as total")
+                ->groupBy('month')
+                ->pluck('total', 'month')
+                ->toArray();
+
+            $expensesByMonth = Expense::whereYear('expense_date', $year)
+                ->selectRaw("MONTH(expense_date) as month, SUM(amount) as total")
+                ->groupBy('month')
+                ->pluck('total', 'month')
+                ->toArray();
+
+            return [$salesByMonth, $expensesByMonth];
+        });
+
+        [$salesByMonth, $expensesByMonth] = $monthlyData;
         $salesData = [];
         $expenseData = [];
         $labels = [];
 
         for ($month = 1; $month <= 12; $month++) {
             $labels[] = now()->month($month)->format('M');
-            $salesData[] = round((float) Order::where('status', OrderStatus::Completed)
-                ->whereYear('created_at', now()->year)
-                ->whereMonth('created_at', $month)
-                ->sum('total_amount'), 2);
-            $expenseData[] = round((float) Expense::whereYear('expense_date', now()->year)
-                ->whereMonth('expense_date', $month)
-                ->sum('amount'), 2);
+            $salesData[] = round((float) ($salesByMonth[$month] ?? 0), 2);
+            $expenseData[] = round((float) ($expensesByMonth[$month] ?? 0), 2);
         }
 
         return [

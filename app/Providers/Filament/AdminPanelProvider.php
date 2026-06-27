@@ -2,16 +2,19 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\ExpenseReport;
+use App\Filament\Pages\InventoryReport;
+use App\Filament\Pages\ProfitReport;
 use App\Filament\Pages\SalesReport;
 use App\Filament\Pages\Settings;
 use App\Models\Setting;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Illuminate\Support\Facades\Storage;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -31,7 +34,11 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->brandName(fn () => rescue(fn () => Setting::get()->business_name, 'My Business'))
+            ->brandName(fn () => \Illuminate\Support\Facades\Cache::rememberForever('brand_name', fn () => Setting::get()->business_name))
+            ->brandLogo(fn () => ($logo = Setting::get()->business_logo)
+                ? Storage::disk('public')->url($logo)
+                : null)
+            ->brandLogoHeight('2rem')
             ->path('admin')
             ->login()
             ->colors([
@@ -43,6 +50,8 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
                 SalesReport::class,
                 ExpenseReport::class,
+                ProfitReport::class,
+                InventoryReport::class,
                 Settings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')

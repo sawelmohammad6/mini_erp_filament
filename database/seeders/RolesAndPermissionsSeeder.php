@@ -26,6 +26,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'Settings',
             'SalesReport',
             'ExpenseReport',
+            'ProfitReport',
+            'InventoryReport',
         ];
 
         $widgets = [
@@ -35,10 +37,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'TopSellingProductsWidget',
             'RecentOrdersWidget',
             'RecentExpensesWidget',
+            'RecentActivitiesWidget',
             'ProductStatsWidget',
             'OrderStatsWidget',
             'ExpenseStatsWidget',
             'CustomerStatsWidget',
+            'UserStatsWidget',
+            'QuickNotificationsWidget',
         ];
 
         foreach ($resources as $resource) {
@@ -67,6 +72,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'viewAny:ExpenseCategory', 'view:ExpenseCategory', 'create:ExpenseCategory', 'update:ExpenseCategory',
             'view:SalesReport',
             'view:ExpenseReport',
+            'view:ProfitReport',
+            'view:InventoryReport',
         ])->get();
         $manager->syncPermissions($managerPermissions);
 
@@ -79,8 +86,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'viewAny:ExpenseCategory', 'view:ExpenseCategory',
             'view:SalesReport',
             'view:ExpenseReport',
+            'view:ProfitReport',
+            'view:InventoryReport',
         ])->get();
         $staff->syncPermissions($staffPermissions);
     }
 }
-

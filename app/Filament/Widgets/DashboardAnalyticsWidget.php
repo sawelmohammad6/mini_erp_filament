@@ -2,21 +2,31 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\OrderStatus;
-use App\Models\Expense;
-use App\Models\Order;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardAnalyticsWidget extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
-        $totalSales = Order::where('status', OrderStatus::Completed)->sum('total_amount');
-        $totalExpenses = Expense::sum('amount');
+        $data = Cache::remember('dashboard_analytics', 60, function () {
+            $result = DB::table('orders')
+                ->selectRaw("
+                    COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) as total_sales,
+                    COUNT(*) as total_orders
+                ")
+                ->first();
+
+            $totalExpenses = (float) DB::table('expenses')->sum('amount');
+
+            return [(float) $result->total_sales, $totalExpenses, (int) $result->total_orders];
+        });
+
+        [$totalSales, $totalExpenses, $totalOrders] = $data;
         $netProfit = $totalSales - $totalExpenses;
-        $totalOrders = Order::count();
 
         return [
             Stat::make('Total Sales', '$' . number_format($totalSales, 2))

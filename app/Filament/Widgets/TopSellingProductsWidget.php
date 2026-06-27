@@ -2,10 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Product;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class TopSellingProductsWidget extends TableWidget
 {
@@ -13,15 +14,18 @@ class TopSellingProductsWidget extends TableWidget
 
     public function table(Table $table): Table
     {
+        $records = Cache::remember('top_selling_products', 120, function () {
+            return DB::table('products')
+                ->selectRaw('products.id, products.name, COALESCE(SUM(order_items.quantity), 0) as total_quantity, COALESCE(SUM(order_items.subtotal), 0) as total_revenue')
+                ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
+                ->groupBy('products.id')
+                ->orderByDesc('total_quantity')
+                ->limit(5)
+                ->get();
+        });
+
         return $table
-            ->query(
-                Product::query()
-                    ->selectRaw('products.*, COALESCE(SUM(order_items.quantity), 0) as total_quantity, COALESCE(SUM(order_items.subtotal), 0) as total_revenue')
-                    ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
-                    ->groupBy('products.id')
-                    ->orderByDesc('total_quantity')
-                    ->limit(5)
-            )
+            ->query(fn () => DB::table('products')->whereRaw('1 = 0'))
             ->columns([
                 TextColumn::make('name')
                     ->label('Product'),
@@ -34,6 +38,7 @@ class TopSellingProductsWidget extends TableWidget
                     ->money('USD')
                     ->sortable(),
             ])
-            ->paginated(false);
+            ->paginated(false)
+            ->records($records);
     }
 }

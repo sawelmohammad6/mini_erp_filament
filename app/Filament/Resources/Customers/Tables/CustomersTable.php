@@ -18,6 +18,7 @@ class CustomersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->query(fn () => \App\Models\Customer::select('id', 'name', 'email', 'phone', 'is_active', 'created_at'))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()

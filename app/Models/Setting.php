@@ -25,6 +25,9 @@ class Setting extends Model
 
     protected static function booted(): void
     {
-        static::saved(fn () => Cache::forget('settings'));
+        static::saved(function () {
+            Cache::forget('settings');
+            Cache::forget('brand_name');
+        });
     }
 }

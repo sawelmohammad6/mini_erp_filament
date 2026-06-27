@@ -3,17 +3,18 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting as SettingsModel;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Log;
 use UnitEnum;
 
 class Settings extends Page
@@ -28,7 +29,7 @@ class Settings extends Page
 
     public string $business_name = '';
 
-    public $business_logo = null;
+    public ?string $business_logo = null;
 
     public string $currency = 'USD';
 
@@ -40,13 +41,21 @@ class Settings extends Page
 
     public function mount(): void
     {
-        $settings = SettingsModel::get();
-        $this->business_name = $settings->business_name;
-        $this->business_logo = $settings->business_logo;
-        $this->currency = $settings->currency;
-        $this->phone = $settings->phone ?? '';
-        $this->email = $settings->email ?? '';
-        $this->address = $settings->address ?? '';
+        try {
+            $settings = SettingsModel::get();
+            $this->business_name = $settings->business_name;
+            $this->business_logo = $settings->business_logo;
+            $this->currency = $settings->currency;
+            $this->phone = $settings->phone ?? '';
+            $this->email = $settings->email ?? '';
+            $this->address = $settings->address ?? '';
+        } catch (\Throwable $e) {
+            Log::error('Failed to load settings: ' . $e->getMessage());
+            Notification::make()
+                ->title('Failed to load settings')
+                ->danger()
+                ->send();
+        }
     }
 
     public function content(Schema $schema): Schema
@@ -64,13 +73,23 @@ class Settings extends Page
                             ->label('Logo')
                             ->image()
                             ->disk('public')
-                            ->directory('business')
-                            ->maxSize(1024),
+                            ->directory('settings')
+                            ->visibility('public')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '1:1',
+                                '4:3',
+                                '16:9',
+                            ])
+                            ->imagePreviewHeight('150')
+                            ->maxSize(1024)
+                            ->fetchFileInformation(false),
                         Select::make('currency')
                             ->options([
                                 'USD' => 'USD ($)',
                                 'EUR' => 'EUR (€)',
                                 'GBP' => 'GBP (£)',
+                                'BDT' => 'BDT (৳)',
                                 'ILS' => 'ILS (₪)',
                                 'JOD' => 'JOD (د.ا)',
                             ])
@@ -102,19 +121,36 @@ class Settings extends Page
 
     public function save(): void
     {
-        $settings = SettingsModel::get();
-        $settings->update([
-            'business_name' => $this->business_name,
-            'business_logo' => $this->business_logo,
-            'currency' => $this->currency,
-            'phone' => $this->phone,
-            'email' => $this->email,
-            'address' => $this->address,
-        ]);
+        try {
+            $businessLogo = $this->business_logo;
 
-        Notification::make()
-            ->title('Settings saved successfully')
-            ->success()
-            ->send();
+            if ($businessLogo instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $businessLogo = $businessLogo->store('settings', 'public');
+            }
+
+            $settings = SettingsModel::get();
+            $settings->update([
+                'business_name' => $this->business_name,
+                'business_logo' => $businessLogo,
+                'currency' => $this->currency,
+                'phone' => $this->phone,
+                'email' => $this->email,
+                'address' => $this->address,
+            ]);
+
+            $this->business_logo = $businessLogo;
+
+            Notification::make()
+                ->title('Settings saved successfully')
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            Log::error('Failed to save settings: ' . $e->getMessage());
+            Notification::make()
+                ->title('Failed to save settings')
+                ->danger()
+                ->body('An error occurred while saving settings.')
+                ->send();
+        }
     }
 }

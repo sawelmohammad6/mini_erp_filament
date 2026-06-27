@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Models\Product;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -19,9 +20,12 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->query(fn () => Product::select('id', 'name', 'sku', 'price', 'stock_quantity', 'image', 'status', 'created_at'))
             ->columns([
                 ImageColumn::make('image')
-    ->url(fn ($record) => asset('storage/' . $record->image)),
+                    ->disk('public')
+                    ->height(150)
+                    ->extraImgAttributes(fn ($record) => $record->image ? [] : ['class' => 'hidden']),
                 TextColumn::make('name')
                     ->label('Product Name')
                     ->searchable()
@@ -36,8 +40,8 @@ class ProductsTable
                     ->label('Stock')
                     ->sortable()
                     ->badge()
-                    ->color(fn (int $state): string => $state < 10 ? 'danger' : 'success')
-                    ->formatStateUsing(fn (int $state): string => $state < 10 ? "{$state} - Low Stock" : (string) $state),
+                    ->color(fn (int $state): string => $state <= 0 ? 'danger' : ($state < 10 ? 'warning' : 'success'))
+                    ->formatStateUsing(fn (int $state): string => $state <= 0 ? 'Out of Stock' : ($state < 10 ? "{$state} - Low Stock" : (string) $state)),
                 IconColumn::make('status')
                     ->label('Status')
                     ->boolean()
@@ -59,8 +63,12 @@ class ProductsTable
                     ->query(fn (Builder $query): Builder => $query->where('status', false))
                     ->toggle(),
                 Filter::make('low_stock')
-                    ->label('Low Stock Products')
-                    ->query(fn (Builder $query): Builder => $query->where('stock_quantity', '<', 10))
+                    ->label('Low Stock')
+                    ->query(fn (Builder $query): Builder => $query->where('stock_quantity', '>', 0)->where('stock_quantity', '<', 10))
+                    ->toggle(),
+                Filter::make('out_of_stock')
+                    ->label('Out of Stock')
+                    ->query(fn (Builder $query): Builder => $query->where('stock_quantity', '<=', 0))
                     ->toggle(),
             ])
             ->recordActions([

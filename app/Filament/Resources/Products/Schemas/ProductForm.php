@@ -53,8 +53,16 @@ class ProductForm
                             ->image()
                             ->disk('public')
                             ->directory('products')
+                            ->visibility('public')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '1:1',
+                                '4:3',
+                                '16:9',
+                            ])
                             ->imagePreviewHeight('150')
-                            ->maxSize(2048),
+                            ->maxSize(2048)
+                            ->fetchFileInformation(false),
                     ]),
                 Section::make('Status')
                     ->schema([

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Expenses\Tables;
 
+use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -13,12 +14,14 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class ExpensesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->query(fn () => Expense::with('category'))
             ->columns([
                 TextColumn::make('category.name')
                     ->label('Category')
@@ -39,7 +42,7 @@ class ExpensesTable
             ->filters([
                 SelectFilter::make('expense_category_id')
                     ->label('Category')
-                    ->options(fn () => ExpenseCategory::pluck('name', 'id'))
+                    ->options(fn () => Cache::remember('expense_category_options', 3600, fn () => ExpenseCategory::pluck('name', 'id')))
                     ->searchable(),
                 Filter::make('today')
                     ->label('Today')

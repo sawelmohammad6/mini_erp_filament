@@ -10,6 +10,7 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -31,6 +32,25 @@ class UserResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema
+            ->columns(2)
+            ->components([
+                TextEntry::make('name'),
+                TextEntry::make('email'),
+                TextEntry::make('roles.name')
+                    ->label('Roles')
+                    ->badge(),
+                TextEntry::make('created_at')
+                    ->label('Created')
+                    ->dateTime('M d, Y'),
+                TextEntry::make('updated_at')
+                    ->label('Updated')
+                    ->dateTime('M d, Y'),
+            ]);
     }
 
     public static function table(Table $table): Table

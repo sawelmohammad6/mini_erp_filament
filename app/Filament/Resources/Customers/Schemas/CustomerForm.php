@@ -6,6 +6,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rule;
 
 class CustomerForm
 {
@@ -19,7 +20,8 @@ class CustomerForm
                     ->maxLength(255),
                 TextInput::make('email')
                     ->email()
-                    ->nullable(),
+                    ->nullable()
+                    ->unique(ignoreRecord: true),
                 TextInput::make('phone')
                     ->required()
                     ->maxLength(20),

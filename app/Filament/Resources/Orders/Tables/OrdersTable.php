@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Orders\Tables;
 
 use App\Enums\OrderStatus;
+use App\Models\Order;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -18,6 +19,7 @@ class OrdersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->query(fn () => Order::with('customer:id,name'))
             ->columns([
                 TextColumn::make('order_number')
                     ->label('Order #')
